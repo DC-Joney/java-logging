@@ -10,7 +10,11 @@ import java.util.logging.Logger;
 
 public interface LoggerConfigurer {
 
-    String DEFAULT_CONFIG_PATH = "nxt_log";
+    String DEFAULT_CONFIG_RESOURCE_PATH = "#{s}resource";
+
+    String DEFAULT_CONFIG_FILE_PATH = "nxt_log";
+
+    String DEFAYLT_RESOURCE_BUNDLE_CONTROL = "java.properties";
 
     int DEFAULT_ERROR_LEVEL = 1000;
 

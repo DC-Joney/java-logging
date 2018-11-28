@@ -1,15 +1,19 @@
 package com.nxt.mms.logger;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.logging.*;
+import java.util.logging.Formatter;
 
 
 @SuppressWarnings("unchecked")
@@ -34,15 +38,24 @@ public abstract class LoggerFactory {
     private static Level level;
 
     static {
+        lock.lock();
         if(atomicBoolean.getAndSet(false)){
             init();
         }
+        lock.unlock();
     }
 
      static void init() {
         try {
             logManager = LogManager.getLogManager();
-            resourceBundle = ResourceBundle.getBundle(LoggerConfigurer.DEFAULT_CONFIG_PATH, Locale.CHINA);
+            URI uri = Paths.get(System.getProperty("user.dir"),
+                    LoggerConfigurer.DEFAULT_CONFIG_RESOURCE_PATH.replace("#{s}", File.separator)).toUri();
+
+            resourceBundle = ResourceBundle.getBundle(LoggerConfigurer.DEFAULT_CONFIG_FILE_PATH,
+                    Locale.CHINA,
+                    getClassLoader(uri),
+                    ResourceBundle.Control.getControl(Collections.unmodifiableList(Collections.singletonList(LoggerConfigurer.DEFAYLT_RESOURCE_BUNDLE_CONTROL))));
+            assert resourceBundle != null;
             defaultHandler = new DefaultConsoleHandler(getLevel(), Charset.forName("GBK"));
             defaultHandler.setFormatter(defaultFormatter);
             defaultHandler.setErrorManager(errorManager);
@@ -53,12 +66,17 @@ public abstract class LoggerFactory {
     }
 
 
+    public static ClassLoader getClassLoader(URI uri) throws MalformedURLException {
+        return new URLClassLoader(new URL[]{uri.toURL()},Thread.currentThread().getContextClassLoader());
+    }
+
+
 
      static <T> Logger getDefaultLogger(Class<T> clazz) {
 
-        lock.tryLock();
+         lock.lock();
 
-        Logger logger = logManager.getLogger(clazz.getName());
+         Logger logger = logManager.getLogger(clazz.getName());
 
         if (logger != null) {
             return logger;

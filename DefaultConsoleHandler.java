@@ -32,7 +32,7 @@ public class DefaultConsoleHandler extends Handler {
         }
         try {
             streamWriter.write(msg);
-
+            flush();
         } catch (Exception ex) {
             // We don't want to throw an exception here, but we
             // report the exception to any registered ErrorManager.
